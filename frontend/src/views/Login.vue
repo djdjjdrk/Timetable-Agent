@@ -4,8 +4,15 @@
       <h1 style="font-size: 28px">实验室预约系统</h1>
       <div style="margin-top: 5px; margin-bottom: 30px">基于Agent智能预约系统</div>
 
-      <el-form :model="form" label-width="auto" style="max-width: 600px">
-        <el-form-item>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="0px"
+        style="width: 100%"
+        @keyup.enter="login"
+      >
+        <el-form-item prop="username">
           <el-input
             size="large"
             v-model="form.username"
@@ -13,7 +20,7 @@
             :prefix-icon="User"
           />
         </el-form-item>
-        <el-form-item>
+        <el-form-item prop="password">
           <el-input
             type="password"
             size="large"
@@ -33,7 +40,7 @@
             >登 录</el-button
           >
           <div style="text-align: right; margin-top: 20px">
-            还没有账号？请 <a style="color: var(--el-color-primary)" href="/register">注册</a>
+            还没有账号？请 <RouterLink style="color: var(--el-color-primary)" to="/register">注册</RouterLink>
           </div>
         </div>
       </el-form>
@@ -46,6 +53,10 @@ import { reactive, ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { loginApi } from '@/api/auth'
+import { useUser } from '@/utils/user'
+
+const { saveLoginData } = useUser()
 
 const form = reactive({
   username: '',
@@ -54,14 +65,33 @@ const form = reactive({
 
 const loadingValue = ref(false)
 
-const login = () => {
-  loadingValue.value = true
-  setTimeout(() => {
-    loadingValue.value = false
-    ElMessage.success('登录成功')
-    router.push('/manager/home')
-  }, 2000)
+const formRef = ref()
+
+const rules = {
+  username: [
+    { required: true, message: '请输入账号', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ]
 }
+
+const login = async () => {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  loadingValue.value = true
+  try {
+    const res = await loginApi(form)
+    if (res.code === 200) {
+      saveLoginData(res.data)
+      ElMessage.success('登录成功')
+      await router.push('/manager/home')
+    }
+  } finally {
+    loadingValue.value = false
+  }
+}
+
 </script>
 
 <style scoped>

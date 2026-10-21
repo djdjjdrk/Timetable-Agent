@@ -1,22 +1,19 @@
 from fastapi import APIRouter, Depends
-from app.schemas.auth import LoginRequest
 from sqlalchemy.orm import Session
+
+from app.common.response import Response
 from app.database import get_db
-from app.models.user import User
-from app.schemas.user import UserResponse
+from app.schemas.auth import LoginRequest, RegisterRequest
+from app.services import auth as auth_service
 
-router = APIRouter(prefix="/api/auth", tags=["权限验证"])
-
+router = APIRouter(prefix="/auth", tags=["权限验证"])
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == data.username).first()
+    result = auth_service.login(db, data)
+    return Response.success(message="登录成功", data=result)
 
-    # 判断账号和密码是否正确
-    if not user or user.password != data.password:
-        return {"code": 400, "message": "账号或密码错误"}
-    return {
-        "code": 200,
-        "message": "操作成功",
-        "data": UserResponse.model_validate(user),
-    }
+@router.post("/register")
+def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    auth_service.register(db, data)
+    return Response.success(message="注册成功")
