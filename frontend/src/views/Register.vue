@@ -1,7 +1,7 @@
 <template>
   <div class="register-container">
     <div class="register-box">
-      <h1 style="font-size: 24px; margin-bottom: 30px">欢迎注册实验室预约系统</h1>
+      <h1 style="font-size: 24px; margin-bottom: 30px">欢迎注册校园课程智能助手</h1>
 
       <el-form ref="formRef" :rules="rules" :model="form" label-width="0px" style="width: 100%">
         <el-form-item prop="username">

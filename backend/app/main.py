@@ -11,10 +11,16 @@ from app.common.exceptions import (
     validation_excpetion_hadler,
     global_excpetion_hadler,
 )
-from app.models.user import User
+from app.models import *  # noqa: F401,F403
 from app.database import Base, engine
 from app.api import api
 from app.config import UPLOAD_DIR
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
 
 Base.metadata.create_all(bind=engine)
 

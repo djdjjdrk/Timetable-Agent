@@ -1,0 +1,8 @@
+name: timetable-backed
+channels:
+  - defaults
+dependencies:
+  - python=3.13
+  - pip
+  - pip:
+      - -r requirements.txt

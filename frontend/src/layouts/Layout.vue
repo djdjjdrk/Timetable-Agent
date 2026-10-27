@@ -12,8 +12,8 @@
         <div
           style="flex: 1; display: flex; align-items: center; font-size: 24px; font-weight: bold"
         >
-          <el-icon :size="40"><House /></el-icon>
-          <div style="margin-left: 5px">智能实验室预约系统</div>
+          <el-icon :size="40"><Calendar /></el-icon>
+          <div style="margin-left: 5px">校园课程智能助手</div>
         </div>
         <el-dropdown @command="handleCommand">
           <div style="display: flex; align-items: center; cursor: pointer">
@@ -36,17 +36,33 @@
               <el-icon><icon-menu /></el-icon>
               系统首页
             </el-menu-item>
-            <el-menu-item index="/manager/lab">
-              <el-icon><House /></el-icon>
-              实验室管理
+            <el-menu-item index="/manager/chat">
+              <el-icon><ChatDotRound /></el-icon>
+              课程助手
             </el-menu-item>
-            <el-menu-item index="/manager/equ">
-              <el-icon><Setting /></el-icon>
-              设备列表管理
+            <el-menu-item v-if="userInfo?.role !== 'admin'" index="/manager/schedule">
+              <el-icon><Calendar /></el-icon>
+              我的课表
+            </el-menu-item>
+            <el-menu-item v-if="userInfo?.role === 'admin'" index="/manager/schedule-manage">
+              <el-icon><Calendar /></el-icon>
+              课表管理
+            </el-menu-item>
+            <el-menu-item v-if="userInfo?.role !== 'admin'" index="/manager/study-plan">
+              <el-icon><Notebook /></el-icon>
+              学习计划
             </el-menu-item>
             <el-menu-item v-if="userInfo?.role === 'admin'" index="/manager/user">
               <el-icon><User /></el-icon>
               用户管理
+            </el-menu-item>
+            <el-menu-item v-if="userInfo?.role === 'admin'" index="/manager/course">
+              <el-icon><Reading /></el-icon>
+              课程管理
+            </el-menu-item>
+            <el-menu-item v-if="userInfo?.role === 'admin'" index="/manager/documents">
+              <el-icon><Document /></el-icon>
+              <span>文档管理</span>
             </el-menu-item>
           </el-menu>
         </el-aside>
@@ -63,7 +79,7 @@ import { useRoute } from 'vue-router'
 import { logout } from '@/utils/auth'
 import { useUser } from '@/utils/user'
 import router from '@/router'
-import { Menu as IconMenu, House, Setting, User } from '@element-plus/icons-vue'
+import { Menu as IconMenu, Calendar, Notebook, User, Reading, ChatDotRound, Document } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const { userInfo } = useUser()

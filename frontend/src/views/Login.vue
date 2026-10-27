@@ -1,8 +1,8 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h1 style="font-size: 28px">实验室预约系统</h1>
-      <div style="margin-top: 5px; margin-bottom: 30px">基于Agent智能预约系统</div>
+      <h1 style="font-size: 28px">校园课程智能助手</h1>
+      <div style="margin-top: 5px; margin-bottom: 30px">课程与学习计划管理</div>
 
       <el-form
         ref="formRef"

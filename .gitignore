@@ -19,3 +19,32 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Runtime uploads and private knowledge-base documents
+/backend/uploads/
+/backend/data/
+
+# Local generated documents, screenshots and scratch scripts
+/output/
+/tmp/
+
+# Runtime logs and local database files/backups
+*.log
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.dump
+*.backup
+
+# Private keys and credential bundles
+*.pem
+*.key
+*.p12
+*.pfx

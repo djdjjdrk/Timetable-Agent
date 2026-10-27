@@ -23,7 +23,9 @@ service.interceptors.response.use(
   (res) => {
     const data = res.data
     if (data.code !== 200) {
-      ElMessage.error(data.message || '请求失败')
+      if (!res.config.silentError || data.code === 401) {
+        ElMessage.error(data.message || '请求失败')
+      }
       if (data.code === 401) {
         logout()
         router.push('/login')
@@ -38,10 +40,10 @@ service.interceptors.response.use(
         ElMessage.error('登录状态已失效，请重新登录')
         logout()
         router.push('/login')
-      } else {
+      } else if (!err.config?.silentError) {
         ElMessage.error(err.response.data?.message || '请求失败')
       }
-    } else {
+    } else if (!err.config?.silentError) {
       ElMessage.error('网络异常，请检查后端服务')
     }
     return Promise.reject(err)

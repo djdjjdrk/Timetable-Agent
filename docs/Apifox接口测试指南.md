@@ -1,5 +1,37 @@
 # Apifox 接口测试
 
+## 直接导入全部接口
+
+本目录的 [`apifox-openapi.json`](./apifox-openapi.json) 是 OpenAPI 3.1 文档，包含当前后端的 **23 个 HTTP 接口**，已配置中文分组、接口名称、路径、请求参数、JSON 请求示例、返回结构、文件上传和 Bearer Token 认证。
+
+1. 在 Apifox 创建或打开一个 HTTP 项目，进入「项目设置 → 导入数据」（不同版本也可能在项目菜单的「导入」中）。
+2. 选择「OpenAPI / Swagger」，选择文件 `docs/apifox-openapi.json`，预览后确认导入。
+3. 在环境中设置服务地址为 `http://127.0.0.1:8000`。接口路径已含 `/api`，服务地址末尾不要再添加 `/api`。
+4. 启动后端，在左侧选择「服务检查 → 检查服务状态」并发送；随后在「权限验证 → 登录」中填写实际账号密码，成功响应中的 `data.token` 就是认证 Token。
+5. 需要登录的接口已声明 Bearer Auth。在 Apifox 的认证设置中填写该 Token；不要再手动添加 `Bearer ` 前缀。建议创建环境变量 `token`，认证值使用 `{{token}}`。如果导入后的接口没有共享认证，在项目/目录设置 Bearer Auth，再将受保护接口批量设为继承父级认证，即可只维护一处 Token。登录、注册、服务检查、文件上传无需认证。
+
+导入后从左侧接口列表选择即可调试，无需逐条输入地址。示例账号并非默认账号，示例 ID 和日期也需要替换为实际值；管理员接口请使用管理员账号的 Token。Token 过期后重新登录并更新。
+
+### 接口变化后重新生成
+
+在项目根目录执行：
+
+```powershell
+.\backend\.venv\Scripts\python.exe .\backend\scripts\export_apifox.py
+```
+
+生成器直接读取现有路由及请求模型，不启动服务、不连接业务数据库，也不导出 `.env` 中的密钥或真实 Token。新增或删除接口后，脚本会提示维护响应类型映射，避免静默漏导接口。生成后在 Apifox 中重新导入，按需选择覆盖已有接口。
+
+若后端使用其他地址，可执行：
+
+```powershell
+.\backend\.venv\Scripts\python.exe .\backend\scripts\export_apifox.py --server http://127.0.0.1:9000
+```
+
+该文件描述 FastAPI HTTP 接口；`backend/mcp_server.py` 的 MCP 工具属于另一套协议，不包含在本次 HTTP 接口导入中。文件上传后返回的 `/uploads/...` 是静态资源访问地址。
+
+下面保留各接口的手动测试说明，供检查参数及权限时参考。
+
 服务地址：`http://127.0.0.1:8000`
 
 ## 1. 服务检查

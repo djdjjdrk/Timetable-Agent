@@ -13,7 +13,23 @@ const router = createRouter({
         { path: 'profile', name: 'Profile', component: () => import('@/views/Profile.vue') },
         { path: 'password', name: 'Password', component: () => import('@/views/Password.vue') },
         { path: 'home', name: 'Home', component: () => import('@/views/Home.vue') },
-        { path: 'lab', name: 'Lab', component: () => import('@/views/Lab.vue') },
+        { path: 'chat', name: 'Chat', component: () => import('@/views/Chat.vue') },
+        { path: 'timetable', redirect: '/manager/schedule' },
+        { path: 'schedule', name: 'Schedule', component: () => import('@/views/Schedule.vue') },
+        {
+          path: 'schedule-manage',
+          name: 'ScheduleManage',
+          component: () => import('@/views/ScheduleManage.vue'),
+          meta: { requiresAdmin: true }
+        },
+        { path: 'study-plan', name: 'StudyPlan', component: () => import('@/views/StudyPlan.vue') },
+        {
+          path: 'course',
+          name: 'Course',
+          component: () => import('@/views/Course.vue'),
+          meta: { requiresAdmin: true }
+        },
+        { path: 'documents', name: 'Documents', component: () => import('@/views/Documents.vue') },
         {
           path: 'user',
           name: 'User',
