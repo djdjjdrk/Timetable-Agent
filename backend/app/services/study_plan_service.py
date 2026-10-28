@@ -25,14 +25,15 @@ def list_page_plans(
 
 
 def create_study_plan(
-    db: Session, current_user: User, data: StudyPlanCreateRequest
+    db: Session, current_user: User, data: StudyPlanCreateRequest,
+    *, turn_id: str | None = None,
 ) -> StudyPlanResponse:
-    """创建学习计划；后续助手可复用此服务。"""
+    """创建学习计划；手动保存不传轮次 ID，MCP 保存传入轮次 ID。"""
     if not data.content:
         raise BusinessException(message="计划内容不能为空")
     if len(data.content) > STUDY_PLAN_MAX_LENGTH:
         raise BusinessException(message=f"计划内容不能超过{STUDY_PLAN_MAX_LENGTH}字")
-    row = StudyPlan(user_id=current_user.id, content=data.content)
+    row = StudyPlan(user_id=current_user.id, content=data.content, turn_id=turn_id)
     db.add(row)
     db.commit()
     db.refresh(row)

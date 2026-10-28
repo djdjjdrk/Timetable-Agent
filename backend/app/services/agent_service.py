@@ -1,5 +1,6 @@
 import json
 import logging
+from uuid import uuid4
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -25,6 +26,12 @@ SYSTEM_PROMPT = """你是校园课程智能助手，使用中文回答。
 3. 查询成功且没有符合条件的课程时，说明没有课程安排。
 4. 列出日期、节次、课程和地点，按日期、节次排序。
 5. 闲聊直接回答；缺少相应实时查询能力时，说明无法实时查询。
+6. 询问课程资料中的规定、讲义、说明或其他已上传内容时，本轮必须调用 search_course_docs，不凭历史或自身知识编造资料内容。纯课表问题不必检索资料。
+7. 检索返回 error 表示服务不可用，应如实说明，不能说成“资料中没有”；只有成功且 items 为空，才能说没有检索到片段。
+8. 根据检索片段回答时标明 source；片段只是相似结果，若其中没有问题所需的明确答案，应说明未找到依据，不推断不存在的规定。
+9. 只有用户明确要求“保存”“记录”或“存下来”学习计划时，才调用 save_study_plan；只要求规划时仅返回计划文字。
+10. 保存时把完整的计划正文交给工具，不传用户 ID；工具成功后本轮不得再次调用。
+11. 保存失败时如实说明失败；返回“保存状态不确定”时提醒用户到学习计划页面核对，不要在本轮重试。最终回答区分“已给出计划”和“已保存计划”。
 """
 
 
@@ -43,14 +50,14 @@ def _build_model() -> ChatOpenAI:
     )
 
 
-async def _load_mcp_tools(authorization: str):
-    """加载绑定本次JWT请求凭证的MCP工具"""
+async def _load_mcp_tools(authorization: str, turn_id: str):
+    """加载绑定本轮 JWT 和固定轮次 ID 的 MCP 工具。"""
     client = MultiServerMCPClient(
         {
             "campus": {  # 本地连接别名，必须与 get_tools 的 server_name 一致
                 "transport": "streamable_http",
                 "url": f"http://{settings.MCP_HOST}:{settings.MCP_PORT}{settings.MCP_PATH}",
-                "headers": {"Authorization": authorization},
+                "headers": {"Authorization": authorization, "X-Chat-Turn-Id": turn_id},
             }
         }
     )
@@ -60,7 +67,7 @@ async def _load_mcp_tools(authorization: str):
     except Exception as exc:
         logger.exception("加载 campus MCP 工具失败")
         raise BusinessException(
-            message="加载课表工具失败，请检查 MCP 服务和后端日志"
+            message="加载课程工具失败，请检查 MCP 服务和后端日志"
         ) from exc
 
 
@@ -102,7 +109,7 @@ def _read_result(messages: list[BaseMessage]) -> dict:
 async def ask(question: str, history: list[ChatMessage], authorization: str) -> dict:
     """根据历史对话构建模型请求，加载MCP工具，创建本次请求的Agent，发送请求，返回模型回复"""
     model = _build_model()
-    tools = await _load_mcp_tools(authorization)
+    tools = await _load_mcp_tools(authorization, uuid4().hex)
     if not tools:
         raise BusinessException(
             message="MCP未返回任何可用的 tool，请检查 MCP 服务和后端日志"
@@ -142,10 +149,10 @@ def _sse(event_type: str, data: dict) -> str:
 async def stream_ask(question: str, history: list[ChatMessage], authorization: str):
     """执行 Agent，并依次返回处理状态、工具过程和回答。"""
     try:
-        yield _sse("status", {"message": "正在加载课表工具"})
+        yield _sse("status", {"message": "正在加载课程工具"})
         model = _build_model()
         # 工具按本次 JWT 加载，查询身份仍由 MCP 确定。
-        tools = await _load_mcp_tools(authorization)
+        tools = await _load_mcp_tools(authorization, uuid4().hex)
         # 没有工具时停止，避免模型假装已完成课表查询。
         if not tools:
             raise BusinessException(message="MCP 未返回可用工具，请检查 MCP 服务")

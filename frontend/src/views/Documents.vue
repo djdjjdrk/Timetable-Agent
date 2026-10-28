@@ -16,11 +16,6 @@
             multiple
           >
             <el-button :disabled="uploadLoading">选择文件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                支持 TXT、Markdown、PDF、DOCX，单个文件不超过 100 MiB。同一批文件全部成功才会保存。
-              </div>
-            </template>
           </el-upload>
           <el-button
             type="primary"
@@ -28,7 +23,11 @@
             :loading="uploadLoading"
             :disabled="fileList.length === 0"
             @click="handleUpload"
-          >上传资料</el-button>
+          >上传并入库</el-button>
+          <div style="margin-top: 6px; color: #909399; font-size: 12px">
+            支持 .txt / .md / .pdf / .docx，单个文件不超过 100 MiB。同名不可重复；扫描版 PDF 可能抽不出文字。
+            同一批中任一文件上传或入库失败，整批撤销。
+          </div>
         </div>
         <el-table
           v-loading="loading"
@@ -40,15 +39,30 @@
           <el-table-column label="类型" width="100">
             <template #default="{ row }">{{ row.ext?.slice(1).toUpperCase() }}</template>
           </el-table-column>
+          <el-table-column prop="ingested" label="已入库" width="90">
+            <template #default="{ row }">
+              <el-tag :type="row.ingested ? 'success' : 'info'" size="small">
+                {{ row.ingested ? '是' : '否' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="大小" width="120">
             <template #default="{ row }">{{ formatSize(row.size) }}</template>
           </el-table-column>
           <el-table-column label="创建时间" min-width="180">
             <template #default="{ row }">{{ formatTime(row.create_time) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="180" fixed="right">
+          <el-table-column label="操作" width="290" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" text bg @click="handlePreview(row)">预览</el-button>
+              <el-button
+                type="primary"
+                text
+                bg
+                size="small"
+                :loading="reingestLoadingId === row.id"
+                @click="handleReingest(row)"
+              >重新入库</el-button>
               <el-button type="danger" text bg :loading="deletingId === row.id" @click="handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
@@ -85,7 +99,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUser } from '@/utils/user'
-import { deleteDocumentApi, listDocumentsApi, previewDocumentApi, uploadDocumentsApi } from '@/api/document'
+import { deleteDocumentApi, listDocumentsApi, previewDocumentApi, reingestDocumentApi, uploadDocumentsApi } from '@/api/document'
 
 defineOptions({ name: 'Documents' })
 const { userInfo } = useUser()
@@ -98,6 +112,7 @@ const allData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const deletingId = ref(null)
+const reingestLoadingId = ref(null) // 正在重新入库的文档 ID，控制对应按钮的加载状态
 const pageData = computed(() => allData.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value))
 const previewVisible = ref(false)
 const previewTitle = ref('资料预览')
@@ -146,7 +161,7 @@ const handleUpload = async () => {
     if (res.code === 200) {
       uploadRef.value?.clearFiles()
       fileList.value = []
-      ElMessage.success('上传成功')
+      ElMessage.success('上传并入库成功')
       currentPage.value = 1
       await load()
     }
@@ -189,10 +204,28 @@ const handlePreview = async (row) => {
   }
 }
 
+const handleReingest = async (row) => {
+  // 已有一份资料在入库时，不重复发起新的入库请求。
+  if (!isAdmin.value || reingestLoadingId.value !== null) return
+  reingestLoadingId.value = row.id
+  try {
+    const res = await reingestDocumentApi(row.id)
+    if (res.code === 200) {
+      ElMessage.success(`「${row.original_name}」已重新入库`)
+    }
+  } catch {
+    // 请求拦截器已提示网络或 HTTP 错误。
+  } finally {
+    reingestLoadingId.value = null
+    // 失败时原文件仍在，但状态可能由“是”变成“否”，因此也刷新列表。
+    await load()
+  }
+}
+
 const handleDelete = async (row) => {
   if (!isAdmin.value || deletingId.value !== null) return
   try {
-    await ElMessageBox.confirm(`确认删除资料「${row.original_name}」？原文件也会被删除。`, '确认删除', { type: 'warning' })
+    await ElMessageBox.confirm(`确认删除文档「${row.original_name}」及其原文件和向量片段？`, '确认删除', { type: 'warning' })
   } catch {
     return
   }
@@ -201,12 +234,12 @@ const handleDelete = async (row) => {
     const res = await deleteDocumentApi(row.id)
     if (res.code === 200) {
       ElMessage.success('已删除')
-      await load()
     }
   } catch {
     // 请求拦截器统一展示错误。
   } finally {
     deletingId.value = null
+    await load() // 删除失败也可能已清理向量，需要同步最新入库状态。
   }
 }
 

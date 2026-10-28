@@ -9,7 +9,7 @@ export function uploadDocumentsApi(files) {
   for (const file of files) {
     data.append('files', file)
   }
-  return request({ url: '/api/documents', method: 'post', data })
+  return request({ url: '/api/documents', method: 'post', data, timeout: 0 })
 }
 
 export function previewDocumentApi(id) {
@@ -19,4 +19,8 @@ export function previewDocumentApi(id) {
 
 export function deleteDocumentApi(id) {
   return request({ url: `/api/documents/${id}`, method: 'delete' })
+}
+
+export function reingestDocumentApi(id) {
+  return request({ url: `/api/documents/${id}/reingest`, method: 'post', timeout: 0 })
 }

@@ -93,7 +93,7 @@ const question = ref('')
 const messages = ref([
   {
     role: 'assistant',
-    content: '您好，我是校园课程助手。你可以询问自己的课表，例如「我明天有什么课？」。',
+    content: '您好，我是校园课程智能助手。你可以查询自己的课表、检索课程资料或制定学习计划；明确说“保存计划”后，我才会为你保存。',
     status: '',
     steps: []
   }
@@ -101,7 +101,11 @@ const messages = ref([
 const history = ref([])
 const sending = ref(false)
 const messageBox = ref(null)
-const toolLabels = { get_my_schedules: '查询我的课表' }
+const toolLabels = {
+  get_my_schedules: '查询我的课表',
+  search_course_docs: '检索课程资料',
+  save_study_plan: '保存学习计划'
+}
 function parseMarkdown(text) {
   return DOMPurify.sanitize(marked.parse(text || ''), { USE_PROFILES: { html: true } })
 }

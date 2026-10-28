@@ -34,6 +34,10 @@ class DocumentCrudTests(unittest.TestCase):
         for patcher in (
             patch.object(document_service, 'KB_DIR', self.directory),
             patch.object(settings, 'JWT_SECRET_KEY', 'document-tests-only-secret-key-32-characters'),
+            # CRUD 测试验证文件与事务；向量写入隔离，避免触碰实际 Chroma。
+            patch.object(document_service, 'ingest_kb_file',
+                         side_effect=lambda path, **_: document_service.extract_document_text(path)),
+            patch.object(document_service, 'delete_by_doc_id'),
         ):
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -119,7 +123,13 @@ class DocumentCrudTests(unittest.TestCase):
             self.assertEqual(self.request('POST', files=files).json()['code'], 400)
             self.assertEqual(self.request('GET').json()['data'], [])
             self.assertEqual(list(self.directory.iterdir()), [])
-        row = self.request('POST', files=[('files', ('blank.txt', b'   \n'))]).json()['data'][0]
+        blank = self.request('POST', files=[('files', ('blank.txt', b'   \n'))]).json()
+        self.assertEqual(blank['code'], 400, blank)
+        self.assertEqual(self.request('GET').json()['data'], [])
+        self.assertEqual(list(self.directory.iterdir()), [])
+        # 新上传会拒绝空白资料；旧资料文件变空后，预览仍应正确报错。
+        row = self.request('POST', files=[('files', ('legacy.txt', b'course notes'))]).json()['data'][0]
+        (self.directory / row['rel_path']).write_text('   \n', encoding='utf-8')
         self.assertEqual(self.request('GET', f"/{row['id']}/preview").json()['code'], 400)
 
     def test_all_four_endpoints_require_admin(self):

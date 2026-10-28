@@ -135,6 +135,8 @@ python -m uvicorn app.main:app --reload
 
 应用加载时通过 `Base.metadata.create_all()` 创建缺失的表，不会创建数据库或迁移已有表结构。旧数据库若缺少用户名唯一约束，可检查并处理重复账号后，按需执行 `backend/migrations/001_unique_username.sql`；已有唯一约束时无需重复添加。
 
+第 13 节新增学习计划 MCP 保存工具。已有 PostgreSQL 数据库需执行 `backend/migrations/003_study_plan_turn_id.sql`，补充 `study_plans.turn_id` 与联合唯一约束；手动保存接口保持兼容。实现原理、轮次去重边界和完整联调方法见 [第 13 节说明](docs/13-MCP保存学习计划与整体联调.md)。
+
 ### 启动 MCP 服务
 
 在另一个终端中进入项目根目录，再执行：

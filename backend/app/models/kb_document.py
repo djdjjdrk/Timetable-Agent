@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String
+from sqlalchemy import Boolean, Integer, String, false
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -18,3 +18,10 @@ class KbDocument(Base):
     )
     size: Mapped[int] = mapped_column(Integer, nullable=False, comment="字节数")
     ext: Mapped[str] = mapped_column(String(20), nullable=False, comment="扩展名")
+    ingested: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+        comment="向量片段是否已写入 Chroma",
+    )

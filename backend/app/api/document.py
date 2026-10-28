@@ -61,3 +61,16 @@ def preview_document(
     db: Annotated[Session, Depends(get_db)],
 ):
     return Response.success(data=document_service.preview_document(db, doc_id))
+
+
+@router.post(
+    "/{doc_id}/reingest",
+    summary="重新入库文档",
+    description="管理员清理指定资料的旧向量片段并重新入库。",
+)
+def reingest_document(
+    doc_id: int,
+    _current_user: Annotated[User, Depends(get_current_admin)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    return Response.success(data=document_service.reingest_document(db, doc_id))

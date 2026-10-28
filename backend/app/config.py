@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str = "deepseek-flash"
     AGENT_RECURSION_LIMIT: int = 14
 
+    # RAG 向量模型与 Chroma 服务
+    EMBEDDING_API_KEY: str = ""
+    EMBEDDING_BASE_URL: str = "https://api.siliconflow.cn/v1"
+    EMBEDDING_MODEL: str = "BAAI/bge-m3"
+    CHROMA_COLLECTION: str = "course_docs"
+    CHROMA_HOST: str = "127.0.0.1"
+    CHROMA_PORT: int = 8002
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env", env_file_encoding="utf-8"
     )
